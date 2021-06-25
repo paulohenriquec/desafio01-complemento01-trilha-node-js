@@ -1,3 +1,4 @@
+  
 const express = require('express');
 const cors = require('cors');
 
@@ -9,20 +10,76 @@ app.use(cors());
 
 const users = [];
 
+
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+  const { username } = request.headers;
+  const user = users.find(
+    user => user.username === username
+  )
+
+  if(!user){
+    return response.status(404).json({error: "user not found"});
+  }
+
+  request.user = user;
+  next();
+
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
-  // Complete aqui
+  const { user } = request;
+  const sizeOfTodos = user.todos.length;
+  
+  if(!user.pro & sizeOfTodos>9){
+    return response.status(403).json({error: "you already has the maximum amount of todo, please become a pro member"});  
+  }
+
+  next();
 }
 
 function checksTodoExists(request, response, next) {
-  // Complete aqui
+  const { username } = request.headers;
+  const { id } = request.params;
+
+  const user = users.find(
+    user => user.username === username
+  )
+
+  if(!user){
+    return response.status(404).json({error: "user not found"});
+  }
+
+  if(!validate(id)){
+    return response.status(400).json({error: "is not and uuid"});
+  }
+
+  const todo = user.todos.find(
+    todo => todo.id === id
+  )
+
+  if(!todo){
+    return response.status(404).json({error: "todo not found"});
+  }
+
+  request.user = user;
+  request.todo = todo;
+  next();
 }
 
 function findUserById(request, response, next) {
-  // Complete aqui
+  const { id } = request.params;
+  
+  const user = users.find(
+    user => user.id === id
+  )
+  
+  if(!user){
+    return response.status(404).json({error: "user not found!"});
+  }
+
+  request.user = user;
+  next();
+
 }
 
 app.post('/users', (request, response) => {
@@ -123,7 +180,7 @@ app.delete('/todos/:id', checksExistsUserAccount, checksTodoExists, (request, re
 module.exports = {
   app,
   users,
-  checksExistsUserAccount,
+ checksExistsUserAccount,
   checksCreateTodosUserAvailability,
   checksTodoExists,
   findUserById
